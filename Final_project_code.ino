@@ -1,143 +1,232 @@
-#include "CytronMotorDriver.h"
-#include <Servo.h>
-char cmd =0;
-
-CytronMD motorL1(PWM_PWM, 10, 11);
-CytronMD motorR1(PWM_PWM, 14, 15);
-CytronMD pump1(PWM_PWM, 8, 9);
-CytronMD pump2(PWM_PWM, 12, 13);
-
+char command = '0';
 int speed = 180;
 
-bool pump1Active = false;
-bool pump2Active = false;
+const int relayPin1 = 2; // relay 1
+const int relayPin2 = 3; // relay 2
+const int relayPin3 = 4; // relay 3
 
-//SERVOS
+const int relayPump3 = 10;
 
-Servo base;
-Servo Link1;
-Servo Link2;
-Servo bracket;
+// Pump1
+#define P1_IN1 5
+#define P1_IN2 6
+
+// Pump2
+#define P2_IN1 7
+#define P2_IN2 30
+
+// Pump4
+#define P4_IN1 26
+#define P4_IN2 28
+
+// For Motors
+#define ENA 9
+#define ENB 8
+
+// Left Motor
+#define ML_IN1 22
+#define ML_IN2 24
+
+// Right Motor
+#define MR_IN1 12
+#define MR_IN2 13
 
 // MOTOR FUNC
+void forward() {
+  analogWrite(ENA, speed);
+  analogWrite(ENB, speed);
 
-void forward(int speedVal){
-  motorL1.setSpeed(speedVal);
-  motorR1.setSpeed(speedVal);
+  digitalWrite(ML_IN1, HIGH);
+  digitalWrite(ML_IN2, LOW);
+
+  digitalWrite(MR_IN1, HIGH);
+  digitalWrite(MR_IN2, LOW);
 }
 
-void backward(int speedVal){
-  motorL1.setSpeed(-speedVal);
-  motorR1.setSpeed(-speedVal);
+void backward() {
+  analogWrite(ENA, speed);
+  analogWrite(ENB, speed);
+
+  digitalWrite(ML_IN1, LOW);
+  digitalWrite(ML_IN2, HIGH);
+
+  digitalWrite(MR_IN1, LOW);
+  digitalWrite(MR_IN2, HIGH);
 }
 
-void turnRight(int speedVal){
-  motorL1.setSpeed(speedVal);
-  motorR1.setSpeed(-speedVal);
+void turnRight() {
+  analogWrite(ENA, speed);
+  analogWrite(ENB, speed);
+
+  digitalWrite(ML_IN1, HIGH);
+  digitalWrite(ML_IN2, LOW);
+
+  digitalWrite(MR_IN1, LOW);
+  digitalWrite(MR_IN2, HIGH);
 }
 
-void turnLeft(int speedVal){
-  motorL1.setSpeed(-speedVal);
-  motorR1.setSpeed(speedVal);
+void turnLeft() {
+  analogWrite(ENA, speed);
+  analogWrite(ENB, speed);
+
+  digitalWrite(ML_IN1, LOW);
+  digitalWrite(ML_IN2, HIGH);
+
+  digitalWrite(MR_IN1, HIGH);
+  digitalWrite(MR_IN2, LOW);
 }
 
-void stopMotors(){
-  motorL1.setSpeed(0);
-  motorR1.setSpeed(0);
-}
+void stopMotors() {
+  analogWrite(ENA, 0);
+  analogWrite(ENB, 0);
 
-void readSerial(){
-  while(Serial1.available()){
-    cmd = Serial1.read();
-    Serial.print(cmd);
-  }
+  digitalWrite(ML_IN1, LOW);
+  digitalWrite(ML_IN2, LOW);
+
+  digitalWrite(MR_IN1, LOW);
+  digitalWrite(MR_IN2, LOW);
 }
 
 //CAR FUNC
-
 void drive(){
-  switch(cmd) {
-    case 'F': forward(speed);   break;
-    case 'B': backward(speed);  break;
-    case 'R': turnRight(speed); break;
-    case 'L': turnLeft(speed);  break;
-    default:  stopMotors();
-  }
-
-} 
-
-void arm_control(){
-  switch(cmd)
-  {
-    case 'a': base.write(0);    pump1Active = true; break;
-    case 'b': Link1.write(0);   pump1Active = true; break;
-    case 'c': Link2.write(0);   pump1Active = true; break;
-    case 'd': bracket.write(0); pump1Active = true; break;
-
-    case 'f': pump2Active = true; break;
-
-    default: 
-      base.write(90);
-      Link1.write(90);
-      Link2.write(90);
-      bracket.write(90);
-      break;
-
+  switch(command) {
+    case 'F': forward();    Serial.println("forward");    break;
+    case 'B': backward();   Serial.println("backward");   break;
+    case 'R': turnRight();  Serial.println("Right");      break;
+    case 'L': turnLeft();   Serial.println("Left");       break;
+    case 'S': stopMotors(); Serial.println("stop");       break;
   }
 }
-
-void pump1_control(){
-
-  if (pump1Active) {
-    pump1.setSpeed(255);   
-  }
-  else {
-    pump1.setSpeed(0);    
-  }
-}
-
-void pump2_control(){
-
-  if (pump2Active) {
-    pump2.setSpeed(255);  
-  }
-  else {
-    pump2.setSpeed(0);     
-  }
-}
-
 
 void setup() {
+  Serial.begin(9600);
+  Serial1.begin(9600);
 
-    Serial.begin(115200);
+  pinMode(relayPin1, OUTPUT);
+  pinMode(relayPin2, OUTPUT);
+  pinMode(relayPin3, OUTPUT);
 
-    // GP28 = TX, GP29 = RX 
-    Serial1.begin(115200);
+  pinMode(relayPump3, OUTPUT);
 
-    // Servo attach
-    base.attach(0,500, 2500);
-    Link1.attach(2,500, 2500);
-    Link2.attach(3,500, 2500);
-    bracket.attach(4,500, 2500);
+  pinMode(P1_IN1, OUTPUT);
+  pinMode(P1_IN2, OUTPUT);
 
-    base.write(90);
-    Link1.write(0);
-    Link2.write(0);
-    bracket.write(0);
+  pinMode(P2_IN1, OUTPUT);
+  pinMode(P2_IN2, OUTPUT);
+
+  pinMode(P4_IN1, OUTPUT);
+  pinMode(P4_IN2, OUTPUT);
+
+  pinMode(ENA, OUTPUT);
+  pinMode(ENB, OUTPUT);
+
+  pinMode(ML_IN1, OUTPUT);
+  pinMode(ML_IN2, OUTPUT);
+
+  pinMode(MR_IN1, OUTPUT);
+  pinMode(MR_IN2, OUTPUT);
+
+  digitalWrite(relayPin1, LOW);
+  digitalWrite(relayPin2, LOW);
+  digitalWrite(relayPin3, LOW);
+
+  digitalWrite(relayPump3, LOW);
+
+  digitalWrite(P1_IN1, LOW);
+  digitalWrite(P1_IN2, LOW);
+
+  digitalWrite(P2_IN1, LOW);
+  digitalWrite(P2_IN2, LOW);
+
+  digitalWrite(P4_IN1, LOW);
+  digitalWrite(P4_IN2, LOW);
 
 }
 
+void readSerial() {
+  while (Serial1.available()) {
+    command = Serial1.read();
+    Serial.println(command);
+  }
+}
+
+void control(){
+  if (command == '1') {
+  digitalWrite(relayPin1, HIGH);
+  digitalWrite(P1_IN1, HIGH);
+  digitalWrite(P1_IN2, LOW);
+
+  digitalWrite(P2_IN1, HIGH);
+  digitalWrite(P2_IN2, LOW);
+
+  }
+  else if (command == '4') {
+    digitalWrite(relayPin1, LOW);
+    digitalWrite(P1_IN1, LOW);
+    digitalWrite(P1_IN2, LOW);
+
+    digitalWrite(P2_IN1, LOW);
+    digitalWrite(P2_IN2, LOW);
+  }
+
+  else if (command == '2') {
+    digitalWrite(relayPin2, HIGH);
+    digitalWrite(P1_IN1, HIGH);
+    digitalWrite(P1_IN2, LOW);
+
+    digitalWrite(P2_IN1, HIGH);
+    digitalWrite(P2_IN2, LOW);
+
+  }
+  else if (command == '5') {
+    digitalWrite(relayPin2, LOW);
+    digitalWrite(P1_IN1, LOW);
+    digitalWrite(P1_IN2, LOW);
+
+    digitalWrite(P2_IN1, LOW);
+    digitalWrite(P2_IN2, LOW);
+  }
+
+  else if (command == '3') {
+    digitalWrite(relayPin3, HIGH);
+    digitalWrite(P1_IN1, HIGH);
+    digitalWrite(P1_IN2, LOW);
+
+    digitalWrite(P2_IN1, HIGH);
+    digitalWrite(P2_IN2, LOW);
+
+  }
+  else if (command == '6') {
+    digitalWrite(relayPin3, LOW);
+    digitalWrite(P1_IN1, LOW);
+    digitalWrite(P1_IN2, LOW);
+
+    digitalWrite(P2_IN1, LOW);
+    digitalWrite(P2_IN2, LOW);
+  }
+  else if (command == 'x') {
+    digitalWrite(relayPump3, HIGH);
+    Serial.println("Pump3");
+  }
+  else if (command == 's') {
+    digitalWrite(relayPump3, LOW);
+
+  }
+  else if (command == 'z') {
+    digitalWrite(P4_IN1, HIGH);
+    digitalWrite(P4_IN2, LOW);
+
+  }
+  else if (command == 'a') {
+    digitalWrite(P4_IN1, LOW);
+    digitalWrite(P4_IN2, LOW);
+
+  }
+}
 
 void loop() {
-
-  pump1Active = false;
-  pump2Active = false;
-
-  readSerial(); 
+  readSerial();
+  control();
   drive();
-  arm_control();
-  pump1_control(); 
-  pump2_control();
-  
-  delay(50);
 }
+

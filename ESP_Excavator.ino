@@ -1,11 +1,10 @@
 #include <Bluepad32.h>
-
 ControllerPtr controller1;
-HardwareSerial MotionSerial(2);   // UART2
-char cmd =0;
+HardwareSerial ArduinoSerial(2);
 
-// CONTROLLER 
+char cmd = '0';
 
+// CONTROLLER
 void onConnectedController(ControllerPtr ctl) {
     Serial.println("Controller Connected");
     controller1 = ctl;
@@ -16,57 +15,48 @@ void onDisconnectedController(ControllerPtr ctl) {
     controller1 = nullptr;
 }
 
-
 // GAMEPAD
 void processGamepad(ControllerPtr ctl) {
 
-    // ARM CONTROL 
-    if (ctl->y())              cmd = 'a'; // Triangle
-    else if (ctl->a())         cmd = 'b'; // X
-    else if (ctl->b())         cmd = 'c'; // Circle
-    else if (ctl->x())         cmd = 'd'; // Square
-    else if (ctl->dpad() == DPAD_UP)        cmd = 'e'; 
-    else if (ctl->dpad() == DPAD_DOWN)      cmd = 'f'; 
-    else if (ctl->dpad() == DPAD_RIGHT)     cmd = 'j'; 
-    else if (ctl->dpad() == DPAD_LEFT)      cmd = 'k'; 
+  // ARM CONTROL
+  if (ctl->a())              cmd = '1'; // X
+  else if (ctl->b())         cmd = '3'; // Circle
+  else if (ctl->x())         cmd = '2'; // Square
 
-    //CAR CONTROL
-    else if (ctl->l1())        cmd = 'B'; // L1
-    else if (ctl->r1())        cmd = 'F'; // R1
-    else if (ctl->l2())        cmd = 'L'; // L2 
-    else if (ctl->r2())        cmd = 'R'; // R2 
-    else                       cmd = 'N';
+  else if (ctl->dpad() == DPAD_DOWN)    cmd = '4';
+  else if (ctl->dpad() == DPAD_RIGHT)   cmd = '6';
+  else if (ctl->dpad() == DPAD_LEFT)    cmd = '5';
 
-    MotionSerial.print(cmd);
-    Serial.println(cmd);   
+  //CAR CONTROL
+  else if (ctl->l1())        cmd = 'L'; // L1
+  else if (ctl->r1())        cmd = 'R'; // R1
+  else if (ctl->l2())        cmd = 'B'; // L2
+  else if (ctl->r2())        cmd = 'F'; // R2
+  else if (ctl->y())         cmd = 'S'; // Triangle
 
+  ArduinoSerial.write(cmd);
 }
-  
-// PROCESS 
 
+
+// PROCESS
 void processController() {
     if (controller1 && controller1->isConnected() && controller1->hasData()) {
         processGamepad(controller1);
     }
 }
 
-
 void setup() {
-  // put your setup code here, to run once:
-    Serial.begin(115200);
 
-    // UART communication to Motion 2350 Pro
-    MotionSerial.begin(115200, SERIAL_8N1, 16, 17);
+  Serial.begin(9600);
 
-    BP32.setup(&onConnectedController, &onDisconnectedController);
-
-    BP32.forgetBluetoothKeys();
+ // ESP32 TX (GPIO17) with Arduino RX (Pin 1)
+  ArduinoSerial.begin(9600, SERIAL_8N1, 16, 17);
+  BP32.setup(&onConnectedController, &onDisconnectedController);
+  BP32.forgetBluetoothKeys();
 }
 
 void loop() {
     BP32.update();
-
     processController();
-
     delay(50);
 }
