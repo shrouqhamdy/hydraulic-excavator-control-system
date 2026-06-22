@@ -217,9 +217,11 @@ void control(){
     digitalWrite(P4_IN2, LOW);
 
   }
-  else if (command == 'a') {
-    digitalWrite(P4_IN1, LOW);
-    digitalWrite(P4_IN2, LOW);
+  // else if (command == 'a') {
+  //   digitalWrite(P4_IN1, LOW);
+  //   digitalWrite(P4_IN2, LOW);
+
+  // }
 
   }
 }

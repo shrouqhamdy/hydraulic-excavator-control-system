@@ -23,10 +23,12 @@ void processGamepad(ControllerPtr ctl) {
   else if (ctl->b())         cmd = '3'; // Circle
   else if (ctl->x())         cmd = '2'; // Square
 
+  else if (ctl->dpad() == DPAD_UP)      cmd = 'x';
   else if (ctl->dpad() == DPAD_DOWN)    cmd = '4';
   else if (ctl->dpad() == DPAD_RIGHT)   cmd = '6';
   else if (ctl->dpad() == DPAD_LEFT)    cmd = '5';
-
+  else if (ctl->thumbL())               cmd = 's';
+  else if (ctl->thumbR())               cmd = 'z';
   //CAR CONTROL
   else if (ctl->l1())        cmd = 'L'; // L1
   else if (ctl->r1())        cmd = 'R'; // R1
